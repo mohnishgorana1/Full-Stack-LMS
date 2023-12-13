@@ -1,5 +1,6 @@
-import AppError from "../utils/error.util";
-import { Jwt } from "jsonwebtoken";
+import  Jwt  from "jsonwebtoken";
+import AppError from "../utils/error.util.js";
+
 const isLoggedIn = async (req, res, next) => {
   const { token } = req.cookie;
   if (!token) {
@@ -11,7 +12,4 @@ const isLoggedIn = async (req, res, next) => {
   req.user = userDetails;
 };
 
-export {
-    isLoggedIn
-    
-}
+export { isLoggedIn };
