@@ -1,6 +1,7 @@
 import mongoose, { Schema, model } from "mongoose";
 import bcrypt from "bcryptjs";
 import Jwt from "jsonwebtoken";
+import crypto from 'crypto'
 
 const userSchema = new Schema(
   {
@@ -83,6 +84,19 @@ userSchema.methods = {
 
   async comparePassword(plainTextPassword) {
     return await bcrypt.compare(plainTextPassword, this.password);
+  },
+
+  async generatePasswordResetToken() {
+    const resetToken = crypto.randomBytes(20).toString("hex");
+
+    // isi resetToken ke jariye me is user ke liye forgetPasswordToken bhi bna dunga
+    this.forgetPasswordToken = crypto
+      .createHash("sha256")
+      .update(resetToken)
+      .digest("hex");
+    this.forgetPasswordExpiry = Date.now() + 15 * 60 * 1000;
+
+    return resetToken;
   },
 };
 
