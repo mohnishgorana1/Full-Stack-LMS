@@ -6,7 +6,8 @@ import {
   logout,
   register,
   resetPassword,
-  changePassword
+  changePassword,
+  updateProfile
 } from "../controllers/user.controller.js";
 
 import { isLoggedIn } from "../middlewares/jwtAuth.middleware.js";
@@ -21,6 +22,7 @@ router.get("/me", isLoggedIn, getProfile);
 router.post('/reset', forgotPassword);
 router.post('/reset/:resetToken', resetPassword);
 router.post('/change-password', isLoggedIn, changePassword)
+router.put('/update', isLoggedIn, upload.single('avatar'), updateProfile)
 
 
 export default router;

@@ -212,19 +212,19 @@ const resetPassword = async (req, res, next) => {
 
 const changePassword = async (req, res, next) => {
   const { oldPassword, newPassword } = req.body;
-  const { id } = req.user;   // jwtAuth middleware se aaya h user
-  
+  const { id } = req.user; // jwtAuth middleware se aaya h user
+
   if (!oldPassword || !newPassword) {
     return next(new AppError("All fields are mandatory", 400));
   }
-  
-  const user  = await User.findOne(id).select(+password);
-  if(!user){
+
+  const user = await User.findOne(id).select(+password);
+  if (!user) {
     return next(new AppError("User doesn't exist", 400));
   }
 
   const isPasswordValid = await User.comparePassword(newPassword);
-  if(!isPasswordValid){
+  if (!isPasswordValid) {
     return next(new AppError("Invalid Old Password", 400));
   }
 
@@ -235,10 +235,52 @@ const changePassword = async (req, res, next) => {
 
   res.status(200).json({
     success: true,
-    message: 'Password changed successfully'
-  })
+    message: "Password changed successfully",
+  });
 };
 
+const updateProfile = async (req, res, next) => {
+  const { fullName } = req.body;
+  const { id } = req.user.id;
+
+  const user = await User.findOne(id);
+  if (!user) {
+    return next(new AppError("User doesn't exist", 400));
+  }
+
+  if (req.fullName) {
+    user.fullName = fullName;
+  }
+  if (req.file) {
+    await cloudinary.v2.uploader.destroy(user.avatar.public_id);
+
+    try {
+      const result = await cloudinary.v2.uploader.upload(req.file.path, {
+        folder: "lms",
+        width: 250,
+        height: 250,
+        gravity: "faces",
+        crop: "fill",
+      });
+      if (result) {
+        user.avatar.public_id = result.public_id;
+        user.avatar.secure_url = result.secure_url;
+
+        //remove file from local system
+        fs.rm(`uploads/${req.file.filename}`);
+      }
+    } catch (e) {
+      new AppError(e || "File not uploaded please try again", 500);
+    }
+  }
+
+  await user.save();
+
+  res.status(200).json({
+    success: true,
+    message: 'User details updates successfully'
+  })
+};
 
 export {
   register,
@@ -248,4 +290,5 @@ export {
   forgotPassword,
   resetPassword,
   changePassword,
+  updateProfile,
 };
