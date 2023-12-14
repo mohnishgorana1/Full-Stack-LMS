@@ -13,6 +13,8 @@ const app = express();
 // middlewares:  express.json | cors | cookieParser | morgan | 
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true}))
+
 app.use(
   cors({
     origin: [process.env.FRONTEND_URL],

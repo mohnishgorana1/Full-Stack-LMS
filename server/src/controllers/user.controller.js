@@ -1,8 +1,10 @@
-import { User } from "../models/user.model.js";
-import AppError from "../utils/error.util.js";
 import cloudinary, { v2 } from "cloudinary";
 import fs from "fs/promises";
-import sendEmail from '../utils/sendEmail.js'
+import crypto from "crypto";
+
+import AppError from "../utils/error.util.js";
+import sendEmail from "../utils/sendEmail.js";
+import { User } from "../models/user.model.js";
 
 const cookieOptions = {
   maxAge: 7 * 24 * 60 * 60 * 1000, // 7day,
@@ -136,9 +138,9 @@ const getProfile = async (req, res, next) => {
 
 const forgotPassword = async (req, res, next) => {
   /*
-    * phele email to deo or me check krunga ki is email ka 'user' register h bhi ya nhi 
-    * acha email to register h, to chalo is 'user' ke liye generatePasswordResetToken bhi krdo
-  */
+   * phele email to deo or me check krunga ki is email ka 'user' register h bhi ya nhi
+   * acha email to register h, to chalo is 'user' ke liye generatePasswordResetToken bhi krdo
+   */
 
   const { email } = req.body;
   if (!email) {
@@ -149,35 +151,101 @@ const forgotPassword = async (req, res, next) => {
     return next(new AppError("Email not registered ", 400));
   }
 
-
   const resetToken = await user.generatePasswordResetToken();
 
   // 'forgetPasswordToken' and 'forgetPasswordExpiry' bhi to update kr liye the 'resetToken' se to usko bhi to save krna padega na
   await user.save();
 
-  
   // reset token bhi le liya or user ke andar details bhi savve krli ab url bhejna na email se
 
-  const resetPasswordURL = `${process.env.FRONTEND_URL}/reset-password:${resetToken}`
+  const resetPasswordURL = `${process.env.FRONTEND_URL}/reset-password:${resetToken}`;
   console.log(resetPasswordURL);
 
   const message = `You can reset your password by clicking on <a href=${resetPasswordURL} target="_blank"> `;
-  const subject = 'RESET PASSWORD'
+  const subject = "RESET PASSWORD";
 
   try {
-    await sendEmail(email, subject, message)
+    await sendEmail(email, subject, message);
     res.status(200).json({
       success: true,
-      message: "Reset URL send to your email"
-    })
-  }catch (error) {
+      message: "Reset URL send to your email",
+    });
+  } catch (error) {
     user.forgetPasswordExpiry = undefined;
     user.forgetPasswordToken = undefined;
     await user.save();
     return next(new AppError("Please try again", 400));
   }
-}
+};
 
-const resetPassword = () => {};
+const resetPassword = async (req, res, next) => {
+  const { resetToken } = req.params;
+  const { password } = req.body;
 
-export { register, login, logout, getProfile, forgotPassword, resetPassword };
+  const forgotPasswordToken = crypto
+    .createHash("sha256")
+    .update(resetToken)
+    .digest("hex");
+
+  const user = user.findOne({
+    forgotPasswordToken,
+    forgetPasswordExpiry: { $gt: Date.now },
+  });
+
+  if (!user) {
+    return next(
+      new AppError("Token is Invalid or Expired Please try again", 400)
+    );
+  }
+
+  user.password = password;
+
+  user.forgetPasswordToken = undefined;
+  user.forgetPasswordExpiry = undefined;
+  user.save();
+
+  res.status(200).json({
+    success: true,
+    message: "Password changed Successfully",
+  });
+};
+
+const changePassword = async (req, res, next) => {
+  const { oldPassword, newPassword } = req.body;
+  const { id } = req.user;   // jwtAuth middleware se aaya h user
+  
+  if (!oldPassword || !newPassword) {
+    return next(new AppError("All fields are mandatory", 400));
+  }
+  
+  const user  = await User.findOne(id).select(+password);
+  if(!user){
+    return next(new AppError("User doesn't exist", 400));
+  }
+
+  const isPasswordValid = await User.comparePassword(newPassword);
+  if(!isPasswordValid){
+    return next(new AppError("Invalid Old Password", 400));
+  }
+
+  user.password = newPassword;
+  await user.save();
+
+  user.password = undefined;
+
+  res.status(200).json({
+    success: true,
+    message: 'Password changed successfully'
+  })
+};
+
+
+export {
+  register,
+  login,
+  logout,
+  getProfile,
+  forgotPassword,
+  resetPassword,
+  changePassword,
+};
