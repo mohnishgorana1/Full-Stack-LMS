@@ -1,5 +1,8 @@
 import { User } from "../models/user.model.js";
 import AppError from "../utils/error.util.js";
+import cloudinary, { v2 } from "cloudinary";
+import fs from "fs/promises";
+import sendEmail from '../utils/sendEmail.js'
 
 const cookieOptions = {
   maxAge: 7 * 24 * 60 * 60 * 1000, // 7day,
@@ -25,8 +28,7 @@ const register = async (req, res, next) => {
     password,
     avatar: {
       public_id: email,
-      secure_url:
-        "https://www.google.com/imgres?imgurl=https%3A%2F%2Fwww.drupal.org%2Ffiles%2Fproject-images%2Flogo_191.png&tbnid=f_PPzQ4v8MVP1M&vet=12ahUKEwiGy9jWq_-CAxXRR2wGHU7ZDHYQMygBegQIARBj..i&imgrefurl=https%3A%2F%2Fwww.drupal.org%2Fproject%2Fcloudinary&docid=u1Lsc-20jV02yM&w=1001&h=194&q=cloudinary&ved=2ahUKEwiGy9jWq_-CAxXRR2wGHU7ZDHYQMygBegQIARBj",
+      secure_url: "",
     },
   });
 
@@ -39,7 +41,29 @@ const register = async (req, res, next) => {
     );
   }
 
-  // TODO: File upload\
+  // file
+
+  if (req.file) {
+    try {
+      const result = await cloudinary.v2.uploader.upload(req.file.path, {
+        folder: "lms",
+        width: 250,
+        height: 250,
+        gravity: "faces",
+        crop: "fill",
+      });
+
+      if (result) {
+        user.avatar.public_id = result.public_id;
+        user.avatar.secure_url = result.secure_url;
+
+        //remove file from local system
+        fs.rm(`uploads/${req.file.filename}`);
+      }
+    } catch (e) {
+      new AppError(e || "File not uploaded please try again", 500);
+    }
+  }
 
   await user.save();
   user.password = undefined;
@@ -110,4 +134,50 @@ const getProfile = async (req, res, next) => {
   }
 };
 
-export { register, login, logout, getProfile };
+const forgotPassword = async (req, res, next) => {
+  /*
+    * phele email to deo or me check krunga ki is email ka 'user' register h bhi ya nhi 
+    * acha email to register h, to chalo is 'user' ke liye generatePasswordResetToken bhi krdo
+  */
+
+  const { email } = req.body;
+  if (!email) {
+    return next(new AppError("Email is required", 400));
+  }
+  const user = await User.findOne({ email });
+  if (!user) {
+    return next(new AppError("Email not registered ", 400));
+  }
+
+
+  const resetToken = await user.generatePasswordResetToken();
+
+  // 'forgetPasswordToken' and 'forgetPasswordExpiry' bhi to update kr liye the 'resetToken' se to usko bhi to save krna padega na
+  await user.save();
+
+  
+  // reset token bhi le liya or user ke andar details bhi savve krli ab url bhejna na email se
+
+  const resetPasswordURL = `${process.env.FRONTEND_URL}/reset-password:${resetToken}`
+  console.log(resetPasswordURL);
+
+  const message = `You can reset your password by clicking on <a href=${resetPasswordURL} target="_blank"> `;
+  const subject = 'RESET PASSWORD'
+
+  try {
+    await sendEmail(email, subject, message)
+    res.status(200).json({
+      success: true,
+      message: "Reset URL send to your email"
+    })
+  }catch (error) {
+    user.forgetPasswordExpiry = undefined;
+    user.forgetPasswordToken = undefined;
+    await user.save();
+    return next(new AppError("Please try again", 400));
+  }
+}
+
+const resetPassword = () => {};
+
+export { register, login, logout, getProfile, forgotPassword, resetPassword };
