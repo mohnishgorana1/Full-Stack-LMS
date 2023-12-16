@@ -12,16 +12,27 @@ import upload from "../middlewares/multer.middleware.js";
 
 const router = express.Router();
 
-router
-  .route("/")
+router.route("/")
   .get(getAllCourses)
-  .post(upload.single("thumbnail"), createCourse);
+  .post(
+    isLoggedIn,
+    upload.single("thumbnail"), 
+    createCourse
+    );
 
 
-router
-  .route("/:id")
-  .get(isLoggedIn, getLecturesByCourseId)
-  .put(updateCourse)
-  .delete(deleteCourse);
+router.route("/:id")
+  .get(
+    isLoggedIn, 
+    getLecturesByCourseId
+  )
+  .put( 
+    isLoggedIn,
+    updateCourse
+  )
+  .delete( 
+    isLoggedIn,
+    deleteCourse
+  );
 
 export default router;
