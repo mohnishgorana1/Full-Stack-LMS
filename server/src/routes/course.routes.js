@@ -6,7 +6,7 @@ import {
   getLecturesByCourseId,
   updateCourse,
 } from "../controllers/course.controller.js";
-import { isLoggedIn } from "../middlewares/jwtAuth.middleware.js";
+import { authorizedRoles, isLoggedIn } from "../middlewares/jwtAuth.middleware.js";
 import upload from "../middlewares/multer.middleware.js";
 
 
@@ -16,6 +16,7 @@ router.route("/")
   .get(getAllCourses)
   .post(
     isLoggedIn,
+    authorizedRoles('ADMIN'),  // authorization
     upload.single("thumbnail"), 
     createCourse
     );
@@ -27,11 +28,13 @@ router.route("/:id")
     getLecturesByCourseId
   )
   .put( 
-    isLoggedIn,
+    isLoggedIn,   // authenticate
+    authorizedRoles('ADMIN'),  // authorization
     updateCourse
   )
   .delete( 
     isLoggedIn,
+    authorizedRoles('ADMIN'),
     deleteCourse
   );
 
