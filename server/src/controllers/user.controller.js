@@ -90,13 +90,13 @@ const login = async (req, res) => {
   try {
     const user = await User.findOne({ email }).select("+password");
 
-    if (!user || !user.comparePassword(password)) {
+    if (!user || await !user.comparePassword(password)) {
       return next(new AppError("Invalid Credentials", 400));
     }
 
-    user.password = undefined;
-
     const token = await user.jwtToken();
+    
+    user.password = undefined;
     res.cookie("token", token, cookieOptions);
 
     res.status(200).json({
@@ -109,18 +109,20 @@ const login = async (req, res) => {
   }
 };
 
-const logout = (req, res) => {
-  res.cookie(token, null, {
-    secure: true,
-    maxAge: 0,
-    httpOnly: true,
-  });
+const logout = (req, res, next) => {
+  try {
+    res.cookie('token', null, { secure: true, maxAge: 0, httpOnly: true });
 
-  res.status(200).json({
-    success: true,
-    message: "User Logged Out",
-  });
+    res.status(200).json({
+      success: true,
+      message: "User Logged Out",
+    });
+
+  } catch (error) {
+    return next(new AppError(error.message, 500));
+  }
 };
+
 const getProfile = async (req, res, next) => {
   try {
     const userId = req.user.id;
@@ -158,10 +160,11 @@ const forgotPassword = async (req, res, next) => {
 
   // reset token bhi le liya or user ke andar details bhi savve krli ab url bhejna na email se
 
-  const resetPasswordURL = `${process.env.FRONTEND_URL}/reset-password:${resetToken}`;
+  const resetPasswordURL = `${process.env.FRONTEND_URL}/reset-password${resetToken}`;
   console.log(resetPasswordURL);
 
-  const message = `You can reset your password by clicking on <a href=${resetPasswordURL} target="_blank"> `;
+  const message = `You can reset your password by clicking <a href=${resetPasswordUrl} target="_blank">Reset your password</a>\nIf the above link does not work for some reason then copy paste this link in new tab ${resetPasswordUrl}.\n If you have not requested this, kindly ignore.`;
+
   const subject = "RESET PASSWORD";
 
   try {
@@ -173,7 +176,9 @@ const forgotPassword = async (req, res, next) => {
   } catch (error) {
     user.forgetPasswordExpiry = undefined;
     user.forgetPasswordToken = undefined;
+
     await user.save();
+    
     return next(new AppError("Please try again", 400));
   }
 };
@@ -278,8 +283,8 @@ const updateProfile = async (req, res, next) => {
 
   res.status(200).json({
     success: true,
-    message: 'User details updates successfully'
-  })
+    message: "User details updates successfully",
+  });
 };
 
 export {

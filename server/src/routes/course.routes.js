@@ -3,9 +3,13 @@ import {
   getAllCourses,
   getLecturesByCourseId,
 } from "../controllers/course.controller.js";
+import { isLoggedIn } from "../middlewares/jwtAuth.middleware.js";
+
+
 const router = express.Router();
 
-router.get("/", getAllCourses);
-router.get("/:id", getLecturesByCourseId);
+router.route("/").get(getAllCourses);
+
+router.route("/:id").get(isLoggedIn, getLecturesByCourseId);
 
 export default router;
