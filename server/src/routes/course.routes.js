@@ -7,6 +7,8 @@ import {
   updateCourse,
 } from "../controllers/course.controller.js";
 import { isLoggedIn } from "../middlewares/jwtAuth.middleware.js";
+import upload from "../middlewares/multer.middleware.js";
+
 
 const router = express.Router();
 
@@ -15,7 +17,7 @@ router
   .get(getAllCourses)
   .post(upload.single("thumbnail"), createCourse);
 
-  
+
 router
   .route("/:id")
   .get(isLoggedIn, getLecturesByCourseId)

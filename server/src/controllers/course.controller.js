@@ -48,20 +48,28 @@ const createCourse = async (req, res, next) => {
     description,
     category,
     createdBy,
+    thumbnail: {
+      public_id: "DUMMY",
+      secure_url: "DUMMY",
+    },
   });
   if (!course) {
     return next(new AppError("Error creating the course", 500));
   }
 
-  if (req.file) {
-    const result = await cloudinary.v2.uploader.upload(req.file.path, {
-      folder: "lms",
-    });
-    if (result) {
-      course.thumbnail.public_id = result.public_id;
-      course.thumbnail.secure_url = result.secure_url;
+  try {
+    if (req.file) {
+      const result = await cloudinary.v2.uploader.upload(req.file.path, {
+        folder: "lms",
+      });
+      if (result) {
+        course.thumbnail.public_id = result.public_id;
+        course.thumbnail.secure_url = result.secure_url;
+      }
+      fs.rm(`uploads/${req.file.filename}`);
     }
-    fs.rm(`uploads/${req.file.filename}`);
+  } catch (error) {
+    return next(new AppError(`Error Uploading File : ${error.message}`, 500));
   }
 
   await course.save();
@@ -69,11 +77,43 @@ const createCourse = async (req, res, next) => {
   res.status(200).json({
     success: true,
     message: "Course created Successfully",
+    course,
   });
 };
 
-const updateCourse = async (req, res, next) => {};
-const deleteCourse = async (req, res, next) => {};
+const updateCourse = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const course = await Course.findByIdAndUpdate(
+      id,
+      {
+        $set: req.body, //! jo bhi info mile usko simply blindly jake update krdo
+      },
+      {
+        runValidators: true,
+      }
+    );
+    if (!course) {
+      return next(new AppError("Course does not exist with given id", 401));
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Course Updated successfully',
+      course
+    })
+  } catch (error) {
+    return next(new AppError(error.message, 500));
+  }
+};
+
+const deleteCourse = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+  } catch (error) {
+    return next(new AppError(error.message, 500));
+  }
+};
 
 export {
   getAllCourses,
