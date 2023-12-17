@@ -5,12 +5,15 @@ import {
   getAllCourses,
   getLecturesByCourseId,
   updateCourse,
+  addLectureToCourseById
 } from "../controllers/course.controller.js";
 import { authorizedRoles, isLoggedIn } from "../middlewares/jwtAuth.middleware.js";
 import upload from "../middlewares/multer.middleware.js";
 
 
+
 const router = express.Router();
+
 
 router.route("/")
   .get(getAllCourses)
@@ -36,6 +39,12 @@ router.route("/:id")
     isLoggedIn,
     authorizedRoles('ADMIN'),
     deleteCourse
-  );
+  )
+  .post(
+    isLoggedIn,
+    authorizedRoles('ADMIN'),
+    upload.single('lecture'),
+    addLectureToCourseById
+  )
 
 export default router;

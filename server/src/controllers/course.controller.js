@@ -99,9 +99,9 @@ const updateCourse = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      message: 'Course Updated successfully',
-      course
-    })
+      message: "Course Updated successfully",
+      course,
+    });
   } catch (error) {
     return next(new AppError(error.message, 500));
   }
@@ -117,22 +117,68 @@ const deleteCourse = async (req, res, next) => {
     }
 
     await course.deleteOne();
-    
+
     res.status(200).json({
       success: true,
-      message: 'Course DELETED successfully',
-    })
-
-
+      message: "Course DELETED successfully",
+    });
   } catch (error) {
     return next(new AppError(error.message, 500));
   }
 };
 
+const addLectureToCourseById = async (req, res, next) => {
+  try {
+    const { title, description } = req.body;
+    if (!title || !description) {
+      return next(new AppError("All Fields are required", 500));
+    }
+
+    const { id } = req.params;
+    const course = await Course.findById(id);
+    if (!course) {
+      return next(new AppError("Course does not exist with given id", 401));
+    }
+
+    const lectures = {
+      title,
+      description,
+      lecture: {
+        public_id: "DUMMY",
+        secure_url: "DUMMY",
+      },
+    };
+
+    if (req.file) {
+      const result = await cloudinary.v2.uploader.upload(req.file.path, {
+        folder: "lms",
+      });
+      if (result) {
+        lectures.lecture.public_id = result.public_id;
+        lectures.lecture.secure_url = result.secure_url;
+      }``
+      fs.rm(`uploads/${req.file.filename}`);
+    }
+
+    course.lectures.push(lectures);
+    // course.numberOfLectures = course.lectures.length();
+
+    await course.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Lecture Successfully added",
+      course,
+    });
+  } catch (error) {
+    return next(new AppError(`Error Uploading File : ${error.message}`, 500));
+  }
+};
 export {
   getAllCourses,
   getLecturesByCourseId,
   createCourse,
   updateCourse,
   deleteCourse,
+  addLectureToCourseById,
 };
