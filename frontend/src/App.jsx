@@ -1,14 +1,10 @@
-import { Routes } from "react-router-dom";
-
-
+import Footer from "./Components/Footer";
 function App() {
-  <>
-    <Routes>
-
-      
-    </Routes>
-  </>
-  
+  return (
+    <>
+      <Footer />
+    </>
+  );
 }
 
 export default App;
