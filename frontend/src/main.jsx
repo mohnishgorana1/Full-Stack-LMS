@@ -9,12 +9,11 @@ import { BrowserRouter } from "react-router-dom";
 import App from "./App.jsx";
 import store from "./Redux/store.js";
 
-
 ReactDOM.createRoot(document.getElementById("root")).render(
-  <App />
-  // <Provider store={store}>
-  //   <BrowserRouter>
-  //     <Toaster />
-  //   </BrowserRouter>
-  // </Provider>
+  <Provider store={store}>
+    <BrowserRouter>
+      <App />
+      <Toaster />
+    </BrowserRouter>
+  </Provider>
 );
