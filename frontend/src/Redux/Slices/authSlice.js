@@ -35,17 +35,39 @@ export const createAccount = createAsyncThunk("/auth/signup", async (data) => {
       },
     });
     console.log("res >>> ", res);
-    
-    if(res.data.success){
-        toast.success("Account created successfully")
-        console.log(res?.data?.message);
-        return res?.data
-    }else{
-        toast.error("Failed to create account")
+
+    if (res.data.success) {
+      toast.success("Account created successfully");
+      console.log(res?.data?.message);
+      return res?.data;
+    } else {
+      toast.error("Failed to create account");
     }
     return (await res).data;
   } catch (error) {
-    toast.error("Error creating account",error);
+    toast.error("Error creating account", error);
+  }
+});
+
+export const login = createAsyncThunk("/auth/login", async (data) => {
+  try {
+    const res = await axios.post("/api/v1/user/login", data, {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    console.log("res >>> ", res);
+
+    if (res.data.success) {
+      toast.success("Logged in successfully");
+      console.log(res?.data?.message);
+      return res?.data;  // (res?.data : {success, msg, user})
+    } else {
+      toast.error("Failed to login");
+    }
+    return (await res).data;
+  } catch (error) {
+    toast.error("Error Login !", error);
   }
 });
 
@@ -53,6 +75,7 @@ const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {},
+
 });
 
 // export const {} =authSlice.actions;
