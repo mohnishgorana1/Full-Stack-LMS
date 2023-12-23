@@ -5,6 +5,7 @@ import crypto from "crypto";
 import AppError from "../utils/error.util.js";
 import sendEmail from "../utils/sendEmail.js";
 import { User } from "../models/user.model.js";
+import asyncHandler from "../middlewares/asyncHandler.middleware.js";
 
 const cookieOptions = {
   maxAge: 7 * 24 * 60 * 60 * 1000, // 7day,
@@ -12,7 +13,7 @@ const cookieOptions = {
   secure: true,
 };
 
-const register = async (req, res, next) => {
+const register = asyncHandler(async (req, res, next) => {
   const { fullName, email, password } = req.body;
 
   if ((!fullName, !email, !password)) {
@@ -21,7 +22,7 @@ const register = async (req, res, next) => {
 
   const userExists = await User.findOne({ email });
   if (userExists) {
-    return next(new AppError("Email already exists", 400));
+    return next(new AppError("Email already exists", 409));
   }
 
   const user = await User.create({
@@ -68,9 +69,9 @@ const register = async (req, res, next) => {
   }
 
   await user.save();
-  user.password = undefined;
-
   const token = await user.jwtToken();
+
+  user.password = undefined;
   res.cookie("token", token, cookieOptions);
 
   res.status(200).json({
@@ -78,7 +79,7 @@ const register = async (req, res, next) => {
     message: "User registered successfully",
     user,
   });
-};
+}) ;
 
 const login = async (req, res) => {
   const { email, password } = req.body;

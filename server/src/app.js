@@ -12,18 +12,18 @@ const app = express();
 
 
 // middlewares:  express.json | cors | cookieParser | morgan | 
-
 app.use(express.json());
 app.use(express.urlencoded({ extended: true}))
-
-app.use(
-  cors({
-    origin: [process.env.FRONTEND_URL],
-  })
-);
 app.use(cookieParser());
 app.use(morgan("dev"));
 
+
+// app.use(
+//   cors({
+//     origin: [process.env.FRONTEND_URL],
+//     credentials: true,
+//   })
+// );
 
 // default route
 app.use("/ping", (req, res) => {
@@ -37,9 +37,8 @@ app.use("/ping", (req, res) => {
 
 app.use('/api/v1/user', userRoutes)
 app.use('/api/v1/courses', courseRoutes)
-
 app.all("*", (req, res) => {
-  res.status(404).send("404, Page NOT FOUND");
+  res.status(404).send("404, Page NOT FOUND nhi mila page");
 });
 
 app.use(errorMiddleware)

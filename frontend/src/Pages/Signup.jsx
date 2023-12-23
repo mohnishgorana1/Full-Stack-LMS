@@ -25,7 +25,7 @@ function Signup() {
     const { name, value } = e.target;
     setSignupData({
       ...signupData,
-      [name]: value,
+      [name]: value
     });
 
     // console.log(signupData);
@@ -53,12 +53,7 @@ function Signup() {
   async function createNewAccount(e) {
     e.preventDefault();
 
-    if (
-      !signupData.email ||
-      !signupData.password ||
-      !signupData.fullName ||
-      !signupData.avatar
-    ) {
+    if ( !signupData.email || !signupData.password || !signupData.fullName || !signupData.avatar) {
       toast.error("Please fill details");
       return;
     }
@@ -88,8 +83,11 @@ function Signup() {
     formData.append("password", signupData.password);
     formData.append("avatar", signupData.avatar);
 
+    console.log(formData);
+
     // dispatch create account action
     const response = await dispatch(createAccount(formData));
+    console.log("SIGNUP RESPONSE", response);
     if (response?.payload?.success) {
       navigate("/");
     }
