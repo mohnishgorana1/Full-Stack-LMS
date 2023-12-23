@@ -2,6 +2,7 @@ import { Route, Routes } from "react-router-dom";
 
 import Footer from "./Components/Footer";
 import AboutUs from "./Pages/AboutUs";
+import CourseList from "./Pages/Courses/CourseList";
 import HomePage from "./Pages/HomePage";
 import Login from "./Pages/Login";
 import NotFound from "./Pages/NotFound";
@@ -14,6 +15,9 @@ function App() {
         <Route path="/about" element={<AboutUs />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/login" element={<Login/>} />
+
+        <Route path="/courses" element={<CourseList/>} />
+
 
 
         <Route path="*" element={<NotFound />} />
