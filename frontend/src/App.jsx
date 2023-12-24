@@ -3,6 +3,7 @@ import { Route, Routes } from "react-router-dom";
 import Footer from "./Components/Footer";
 import AboutUs from "./Pages/AboutUs";
 import Contact from "./Pages/Contact";
+import CourseDescription from "./Pages/Courses/CourseDescription";
 import CourseList from "./Pages/Courses/CourseList";
 import Denied from "./Pages/Denied";
 import HomePage from "./Pages/HomePage";
@@ -21,12 +22,11 @@ function App() {
         <Route path="/login" element={<Login/>} />
 
         <Route path="/courses" element={<CourseList/>} />
+        <Route path="/courses/description" element={<CourseDescription/>} />
+
+
+
         <Route path="/denied" element={<Denied/>} />
-
-        
-
-
-
         <Route path="*" element={<NotFound />} />
       </Routes>
       <Footer />
