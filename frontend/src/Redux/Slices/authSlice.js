@@ -7,25 +7,12 @@ import axiosInstance from "../../Helpers/axiosInstance.js";
 const initialState = {
   isLoggedIn: localStorage.getItem("isLoggedIn") || false,
   role: localStorage.getItem("role") || "",
-  data: JSON.parse(localStorage.getItem("data")) || {},
+  data:
+    localStorage.getItem("data") != undefined
+      ? JSON.parse(localStorage.getItem("data"))
+      : {},
+  // data: localStorage.getItem("data") || {},
 };
-
-// export const createAccount = createAsyncThunk("/auth/signup", async (data) => {
-//   try {
-//     const res = axiosInstance.post("user/register", data);
-//     console.log("res >>> ", res);
-//     toast.promise(res, {
-//       loading: "Wait! creating your account",
-//       success: (data) => {
-//         return data?.data?.message;
-//       },
-//       error: "Failed to create account",
-//     });
-//     return (await res).data;
-//   } catch (error) {
-//     toast.error(error?.response?.data?.message);
-//   }
-// });
 
 export const createAccount = createAsyncThunk("/auth/signup", async (data) => {
   try {
@@ -88,6 +75,39 @@ export const logout = createAsyncThunk("/auth/logout", async () => {
   }
 });
 
+export const updateProfile = createAsyncThunk("/user/update/profile", async (data) => {
+  try {
+    const res = await axios.put(`/api/v1/user/update/${data[0]}`, data[1]);
+    console.log("update profile res >>> ", res);
+
+    if (res.data.success) {
+      toast.success("Profile Updated Successfully");
+      console.log(res?.data?.message);
+      return res?.data;
+    } else {
+      toast.error("Profile Update request failed");
+      return;
+    }
+  } catch (error) {
+    toast.error("Profile Update request failed");
+  }
+});
+
+export const getUserData = createAsyncThunk("/user/details", async () => {
+  try {
+    const res = await axios.get("/api/v1/user/me");
+    console.log("user data res >>> ", res);
+
+    if (res.data.success) {
+      return res?.data?.user;
+    } else {
+      toast.error("Profile Update request failed");
+      return;
+    }
+  } catch (error) {
+    toast.error("Profile fetched failed");
+  }
+});
 const authSlice = createSlice({
   name: "auth",
   initialState,
@@ -107,6 +127,15 @@ const authSlice = createSlice({
       // localStorage.setItem('role', "")
       localStorage.clear();
       (state.isLoggedIn = false), (state.data = {}), (state.role = "");
+    });
+    builder.addCase(getUserData.fulfilled, (state, action) => {
+      if (!action?.payload?.user) return;
+      localStorage.setItem("data", JSON.stringify(action?.payload?.user));
+      localStorage.setItem("isLoggedIn", true);
+      localStorage.setItem("role", action?.payload?.user?.role);
+      state.isLoggedIn = true;
+      state.data = action?.payload?.user;
+      state.role = action?.payload?.user?.role;
     });
   },
 });
