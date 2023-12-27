@@ -79,7 +79,7 @@ const register = asyncHandler(async (req, res, next) => {
     message: "User registered successfully",
     user,
   });
-}) ;
+});
 
 const login = async (req, res) => {
   const { email, password } = req.body;
@@ -91,12 +91,12 @@ const login = async (req, res) => {
   try {
     const user = await User.findOne({ email }).select("+password");
 
-    if (!user || await !user.comparePassword(password)) {
+    if (!user || (await !user.comparePassword(password))) {
       return next(new AppError("Invalid Credentials", 400));
     }
 
     const token = await user.jwtToken();
-    
+
     user.password = undefined;
     res.cookie("token", token, cookieOptions);
 
@@ -112,13 +112,12 @@ const login = async (req, res) => {
 
 const logout = (req, res, next) => {
   try {
-    res.cookie('token', null, { secure: true, maxAge: 0, httpOnly: true });
+    res.cookie("token", null, { secure: true, maxAge: 0, httpOnly: true });
 
     res.status(200).json({
       success: true,
       message: "User Logged Out",
     });
-
   } catch (error) {
     return next(new AppError(error.message, 500));
   }
@@ -179,7 +178,7 @@ const forgotPassword = async (req, res, next) => {
     user.forgetPasswordToken = undefined;
 
     await user.save();
-    
+
     return next(new AppError("Please try again", 400));
   }
 };
@@ -247,44 +246,56 @@ const changePassword = async (req, res, next) => {
 
 const updateProfile = async (req, res, next) => {
   const { fullName } = req.body;
-  const { id } = req.user.id;
+  const { id } = req.params;
 
-  const user = await User.findOne(id);
+  const user = await User.findById(id);
   if (!user) {
     return next(new AppError("User doesn't exist", 400));
   }
 
-  if (req.fullName) {
+  if (fullName) {
+    console.log("Initial name: ", user.fullName);
+    console.log("Given name for update ", fullName);
+
     user.fullName = fullName;
   }
+
   if (req.file) {
     await cloudinary.v2.uploader.destroy(user.avatar.public_id);
 
     try {
       const result = await cloudinary.v2.uploader.upload(req.file.path, {
-        folder: "lms",
+        folder: "lms", // Save files in a folder named lms
         width: 250,
         height: 250,
-        gravity: "faces",
+        gravity: "faces", // This option tells cloudinary to center the image around detected faces (if any) after cropping or resizing the original image
         crop: "fill",
       });
+
+      // If success
       if (result) {
+        // Set the public_id and secure_url in DB
         user.avatar.public_id = result.public_id;
         user.avatar.secure_url = result.secure_url;
-
-        //remove file from local system
+        // After successful upload remove the file from local storage
         fs.rm(`uploads/${req.file.filename}`);
       }
-    } catch (e) {
-      new AppError(e || "File not uploaded please try again", 500);
+    } catch (error) {
+      return next(
+        new AppError(error || "File not uploaded, please try again", 400)
+      );
     }
   }
 
   await user.save();
 
+  // user = await User.findById(id);
+  console.log("USER FETCH AFTER SAVE", user);
+
   res.status(200).json({
     success: true,
     message: "User details updates successfully",
+    user,
   });
 };
 
