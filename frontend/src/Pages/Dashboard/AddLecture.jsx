@@ -45,7 +45,7 @@ function AddLecture() {
     });
   }
 
-  console.log("userInputBeforsFormSubmit:   ",userInput);
+  console.log("userInputBeforsFormSubmit:   ", userInput);
 
   async function onFormSubmit(e) {
     e.preventDefault();
@@ -66,13 +66,12 @@ function AddLecture() {
         description: "",
         videoSrc: "",
       });
-      navigate(-1)
+      navigate(-1);
     }
   }
   useEffect(() => {
     if (!courseDetails) navigate("/courses");
   }, []);
-
 
   return (
     <HomeLayout>
@@ -118,7 +117,10 @@ function AddLecture() {
               ></video>
             ) : (
               <div className="h-48 border flex items-center justify-center cursor-pointer">
-                <label className="font-semibold text-cl cursor-pointer" htmlFor="lecture">
+                <label
+                  className="font-semibold text-cl cursor-pointer"
+                  htmlFor="lecture"
+                >
                   Choose your video
                 </label>
                 <input
