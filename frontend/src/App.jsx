@@ -7,6 +7,7 @@ import Contact from "./Pages/Contact";
 import CourseDescription from "./Pages/Courses/CourseDescription";
 import CourseList from "./Pages/Courses/CourseList";
 import CreateCourse from "./Pages/Courses/CreateCourse";
+import DisplayLectures from "./Pages/Dashboard/DisplayLectures";
 import Denied from "./Pages/Denied";
 import HomePage from "./Pages/HomePage";
 import Login from "./Pages/Login";
@@ -37,6 +38,7 @@ function App() {
         <Route element={<RequireAuth allowedRoles={["ADMIN", "USER"]} />}>
           <Route path="/user/profile" element={<Profile />} />
           <Route path="/user/editprofile" element={<EditProfile />} />
+          <Route path="/course/displaylectures" element={<DisplayLectures /> }/>
         </Route>
         <Route path="*" element={<NotFound />} />
       </Routes>
